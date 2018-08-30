@@ -19,11 +19,13 @@ from django.contrib import admin
 from django.shortcuts import HttpResponse, render
 
 def login(request):
-    # return HttpResponse('<p1>jango show </p1><input type="text" placeholder="test">')
     return render(request, 'login.html')
+
+def info(request):
+    pass
 
 urlpatterns = [
     # url(r'^admin/', admin.site.urls),
     url(r'^login/', login),
-
+    url(r'^info/', info),
 ]
