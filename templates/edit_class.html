@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit_class</title>
+</head>
+<body>
+    <h1>info</h1>
+    <h2>编辑</h2>
+    <form method="post" action="/edit_class/?nid={{ classes_id }}">
+    <input type="text" name="class_name" value="{{ classes_name }}"/>
+    <input type="submit" value="编辑">
+        {{ edit_error_msg }}
+    </form>
+</body>
+</html>

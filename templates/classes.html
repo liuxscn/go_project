@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Class</title>
+</head>
+<body>
+    <h1>info</h1>
+    <h2>添加</h2>
+    <form method="post" action="/add_class/">
+    <input type="text" name="name" />
+    <input type="submit" value="添加">
+        {{ error_msg }}
+    </form>
+
+    <table border="1">
+        <thead>
+        <tr>
+            <td>ID</td>
+            <td>名称</td>
+            <td>操作</td>
+        </tr>
+        </thead>
+        {% for row in classes_data %}
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.name }}</td>
+            <td>
+                <a href="/edit_class/?nid={{ row.id }}">编辑</a> |
+                <a href="/del_class/?nid={{ row.id }}">删除</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
