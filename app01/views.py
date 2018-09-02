@@ -1,4 +1,4 @@
-
+from utils import sqlhelper
 from django.shortcuts import HttpResponse, render, redirect
 import pymysql
 
@@ -150,3 +150,76 @@ def edit_class(request):
 
                 return redirect('/classes/')
 
+def students(request):
+    sql = 'select students.id,students.name,classes.name as class_name from students left join classes on students.class_id=classes.id'
+    args = []
+    students_list = sqlhelper.get_list(sql, args)
+    return render(request, 'students.html', {
+        'students_data': students_list
+    })
+
+def add_student(request):
+    if request.method == 'GET':
+        sql = 'select id, name from classes'
+        args = []
+        classes_data = sqlhelper.get_list(sql, args)
+
+        return render(request, 'add_student.html', {'classes_data' : classes_data})
+
+    elif request.method == 'POST':
+        class_id = request.POST.get('class_id')
+        student_name = request.POST.get('student_name')
+        sql = 'insert into students(name,class_id) values(%s, %s)'
+        args = [student_name, class_id, ]
+        sqlhelper.insert(sql, args)
+        return redirect('/students/')
+
+    else:
+        return HttpResponse('error in add_student')
+
+def del_student(request):
+    nid = request.GET.get('nid')
+    sql = 'delete from students where id=%s'
+    args = [nid, ]
+    sqlhelper.delete(sql, args)
+    return redirect('/students/')
+
+def edit_student(request):
+    if request.method == 'GET':
+        nid = request.GET.get('nid')
+        sql = 'select id,name, class_id from students where id=%s'
+        args = [nid, ]
+        current_student_data = sqlhelper.get_one(sql, args)
+        sql_class = 'select * from classes'
+        classes_data = sqlhelper.get_list(sql_class, [])
+
+        return render(request, 'edit_student.html', {'classes_data' : classes_data,
+                                                     'current_student_data': current_student_data})
+
+    elif request.method == 'POST':
+        nid = request.GET.get('nid')
+        name = request.POST.get('student_name')
+        class_id = request.POST.get('class_id')
+        if len(name) > 0:
+            sql = 'update students set name=%s, class_id=%s where id=%s'
+            args = [name, class_id, nid, ]
+            sqlhelper(sql, args)
+            return redirect('/students/')
+        else:
+            print('nid: ', nid)
+            sql = 'select id,name,class_id from students where students.id=%s'
+            args = [nid, ]
+            current_student_data = sqlhelper.get_one(sql, args)
+            sql_class = 'select * from classes'
+            classes_data = sqlhelper.get_list(sql_class, [])
+
+            print('current_student_data.id: ', str(current_student_data))
+
+            return render(request, 'edit_student.html', {
+                'classes_data' : classes_data,
+                'current_student_data': current_student_data,
+                'error_msg' : '学生姓名不能为空'
+            })
+
+    else:
+        return HttpResponse('error in edit_student')
