@@ -3,10 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <title>Class</title>
+    <style>
+        .hide{
+            display: none;
+        }
+        .shadow{
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: black;
+            opacity: 0.4;
+            z-index: 99;<!-- 值越大对话框越在上层 -->
+        }
+        .modal{
+            position: fixed;
+            left: 50%;  <!-- 距离左边框半个浏览器的距离 -->
+            top: 50%;
+            height : 300px;
+            width : 400px;
+            background-color: white;
+            margin-left: -400px;
+            margin-top: -150px;
+            z-index: 100;
+
+        }
+    </style>
+
 </head>
 <body>
     <h1>info</h1>
+    <div>
     <h2>添加</h2>
+    <a onclick="showModal();">对话框添加</a>
+    </div>
     <form method="post" action="/add_class/">
     <input type="text" name="name" />
     <input type="submit" value="添加">
@@ -32,5 +63,55 @@
         </tr>
         {% endfor %}
     </table>
+    <div id="shadow" class="shadow hide"></div>
+    <div id="modal" class="modal hide">
+    <form method="POST" action="/modal_add_class/">
+        <p>班级名称<input id="name" type="text" name="name"></p>
+        <!--
+        <input type="submit" value="提交"/>
+        -->
+        <input type="button" value="提交" onclick="AjaxSend();"/>
+        <span id="error_msg"></span>
+        <input type="button" value="取消" onclick="CancelModal();"/>
+    </form>
+    </div>
+    <!--
+    <script src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+    -->
+    <script src="/static/jquery-1.12.4.min.js"></script>
+    <script>
+        function showModal() {
+            document.getElementById('shadow').classList.remove('hide')
+            document.getElementById('modal').classList.remove('hide')
+        }
+        function CancelModal() {
+            document.getElementById('shadow').classList.add('hide')
+            document.getElementById('modal').classList.add('hide')
+        }
+        function AjaxSend() {
+            $.ajax({
+                url: '/modal_add_class/',
+                type: 'POST',
+                data: {'name' : $('#name').val()},
+                // 拿到用户输入的值
+                // <p>班级名称<input id="name" type="text" name="name"></p>
+                success: function(data){
+                    //当服务端处理完成后，返回数据时，自动调用该函数
+                    //参数data为服务器返回的数据
+                    console.log(data);
+                    if(data == "ok"){
+                        alert('添加成功');
+                        location.href = '/classes/';
+                    }
+                    else{
+                        // alert('添加失败');
+                        $('#error_msg').text(data)
+                    }
+                }
+                })
+        }
+
+    </script>
+</body>
 </body>
 </html>

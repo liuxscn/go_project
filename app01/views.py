@@ -169,10 +169,17 @@ def add_student(request):
     elif request.method == 'POST':
         class_id = request.POST.get('class_id')
         student_name = request.POST.get('student_name')
-        sql = 'insert into students(name,class_id) values(%s, %s)'
-        args = [student_name, class_id, ]
-        sqlhelper.insert(sql, args)
-        return redirect('/students/')
+        if len(student_name) > 0:
+            sql = 'insert into students(name,class_id) values(%s, %s)'
+            args = [student_name, class_id, ]
+            sqlhelper.insert(sql, args)
+            return redirect('/students/')
+        else:
+            sql = 'select id, name from classes'
+            args = []
+            classes_data = sqlhelper.get_list(sql, args)
+            return render(request, 'add_student.html', {'classes_data' : classes_data,
+                                                        'error_msg' : '不能为空'})
 
     else:
         return HttpResponse('error in add_student')
@@ -203,7 +210,7 @@ def edit_student(request):
         if len(name) > 0:
             sql = 'update students set name=%s, class_id=%s where id=%s'
             args = [name, class_id, nid, ]
-            sqlhelper(sql, args)
+            sqlhelper.update(sql, args)
             return redirect('/students/')
         else:
             print('nid: ', nid)
@@ -223,3 +230,18 @@ def edit_student(request):
 
     else:
         return HttpResponse('error in edit_student')
+
+def modal_add_class(request):
+    name = request.POST.get('name')
+    if len(name) > 0:
+        sql = 'insert into classes(name) values(%s)'
+        args = [name, ]
+        sqlhelper.insert(sql, args)
+        # return redirect('/classes/')
+        return HttpResponse('ok')
+
+    else:
+        return HttpResponse('名称不能为空')
+    # print(name)
+    # import time
+    # time.sleep(5)
