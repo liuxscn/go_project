@@ -1,3 +1,4 @@
+import json
 from utils import sqlhelper
 from django.shortcuts import HttpResponse, render, redirect
 import pymysql
@@ -151,11 +152,16 @@ def edit_class(request):
                 return redirect('/classes/')
 
 def students(request):
-    sql = 'select students.id,students.name,classes.name as class_name from students left join classes on students.class_id=classes.id'
+    sql = 'select students.id,students.name,classes.id as class_id, classes.name as class_name from students left join classes on students.class_id=classes.id'
     args = []
     students_list = sqlhelper.get_list(sql, args)
+
+    sql_class = 'select id, name from classes'
+    args = []
+    classes_list = sqlhelper.get_list(sql_class, args)
     return render(request, 'students.html', {
-        'students_data': students_list
+        'students_data': students_list,
+        'classes_data': classes_list,
     })
 
 def add_student(request):
@@ -245,3 +251,148 @@ def modal_add_class(request):
     # print(name)
     # import time
     # time.sleep(5)
+
+def modal_add_student(request):
+    ret = {'status': True, 'message': None}
+    try:
+        name = request.POST.get('name')
+        class_id = request.POST.get('class_id')
+        if len(name) > 0:
+            sql = 'insert into students(name, class_id) values(%s, %s)'
+            args = [name, class_id, ]
+            sqlhelper.insert(sql, args)
+        else:
+            ret['status'] = False
+            ret['message'] = '学生名称不能为空'
+    except Exception as e:
+        ret['status'] = False
+        ret['message'] = str(e)
+
+    return HttpResponse(json.dumps(ret))
+
+def modal_edit_student(request):
+    ret = {'status': True, 'message': None}
+    try:
+        student_id = request.POST.get('student_id')
+        student_name = request.POST.get('student_name')
+        class_id = request.POST.get('class_id')
+        if len(student_name) > 0:
+            sql = 'update students set name=%s, class_id=%s where id=%s'
+            args = [student_name, class_id, student_id, ]
+            sqlhelper.update(sql, args)
+        else:
+            ret['status'] = False
+            ret['message'] = '学生名称不能为空'
+    except Exception as e:
+        ret['status'] = False
+        ret['message'] = str(e)
+
+    return HttpResponse(json.dumps(ret))
+
+def teachers(request):
+    sql = '''SELECT test.teachers.id as t_id,test.teachers.name as t_name, test.teachers_classes.class_id as c_id, test.classes.name as c_name
+            FROM test.teachers
+            LEFT JOIN test.teachers_classes on test.teachers.id=test.teachers_classes.teacher_id
+            LEFT JOIN test.classes on test.teachers_classes.class_id=test.classes.id;'''
+    args = []
+    teachers_list = sqlhelper.get_list(sql, args)
+    ret = {}
+    for row in teachers_list:
+        tid = row['t_id']
+        if tid in ret:
+            ret[tid]['c_id'].append(row['c_id'])
+            ret[tid]['c_name'].append(row['c_name'])
+        else:
+            c_id_list = []
+            c_id_list.append(row['c_id'])
+            c_name_list = []
+            c_name_list.append(row['c_name'])
+            ret[tid] = {'t_id': row['t_id'], 't_name': row['t_name'], 'c_id': c_id_list, 'c_name': c_name_list}
+
+    return render(request, 'teachers.html', {
+        'teachers_data': ret.values(),
+    })
+
+def add_teacher(request):
+    ret = {'status': True, 'message': None}
+    try:
+        if request.method == 'GET':
+            sql = 'select id,name from classes'
+            args = []
+            classes_list = sqlhelper.get_list(sql, args)
+            return render(request, 'add_teacher.html', {
+                'classes_data': classes_list,
+            })
+        else:
+            teacher_name = request.POST.get('teacher_name')
+            class_id_list = request.POST.getlist('class_id')
+            print(teacher_name, class_id_list)
+            if len(teacher_name) > 0 and class_id_list:
+                obj_sql = sqlhelper.SqlHelper()
+                sql = 'insert into teachers(name) values(%s)'
+                args = [teacher_name, ]
+                # teacher_id = sqlhelper.insert(sql, args)
+                teacher_id = obj_sql.create(sql, args)
+                sql1 = 'insert into teachers_classes(teacher_id, class_id) values(%s, %s)'
+                # for class_id in class_id_list:
+                #     args1 = [teacher_id, ]
+                #     args1.append(class_id)
+                #     sqlhelper.insert(sql1, args1)
+                args1 = []
+                for class_id in class_id_list:
+                    temp = (teacher_id, class_id)
+                    args1.append(temp)
+                obj_sql.multiple_modify(sql1, args1)
+                obj_sql.close()
+                return redirect('/teachers/')
+            else:
+                raise Exception('老师姓名或班级ID不能为空')
+    except Exception as e:
+        ret['status'] = False
+        ret['message'] = str(e)
+
+    return HttpResponse(ret['message'])
+
+def edit_teacher(request):
+    try:
+        t_id = request.GET.get('nid')
+        sql_obj = sqlhelper.SqlHelper()
+        if request.method == 'GET':
+            t_name_ret = sql_obj.get_one('select name from teachers where id=%s', t_id)
+            t_name = t_name_ret.get('name')
+            class_ids_ret = sql_obj.get_list('select class_id from teachers_classes where teacher_id=%s', t_id)
+            class_ids = []
+            for item in class_ids_ret:
+                class_ids.append(item.get('class_id'))
+            class_list = sql_obj.get_list('select id, name from classes', [])
+
+            return render(request, 'edit_teacher.html', {
+                't_id': t_id,
+                't_name': t_name,
+                'class_ids': class_ids,
+                'class_list': class_list,
+            })
+        elif request.method == 'POST':
+            t_name = request.POST.get('teacher_name')
+            class_ids = request.POST.getlist('class_ids')
+            if len(t_name) > 0 and class_ids:
+                sql_obj.modify('update teachers set name=%s where id=%s', [t_name, t_id, ])
+                sql_obj.modify('delete from teachers_classes where teacher_id=%s', [t_id, ])
+                rel_list = []
+                for class_id in class_ids:
+                    rel_list.append((t_id, class_id))
+                sql_obj.multiple_modify('insert into teachers_classes(teacher_id, class_id) values(%s, %s) ', rel_list)
+                return redirect('/teachers/')
+            else:
+                raise Exception('老师姓名或班级ID不能为空')
+
+        sql_obj.close()
+    except Exception as e:
+        return HttpResponse(str(e))
+
+
+def test(request):
+    return render(request, 'test.html')
+
+def layout(request):
+    return render(request, 'layout.html')

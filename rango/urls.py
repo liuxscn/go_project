@@ -31,5 +31,15 @@ urlpatterns = [
     url(r'^del_student/', views.del_student),
     url(r'^edit_student/', views.edit_student),
     url(r'^modal_add_class/', views.modal_add_class),
+    url(r'^modal_add_student/', views.modal_add_student),
+    url(r'^modal_edit_student/', views.modal_edit_student),
+
+    url(r'^teachers/', views.teachers),
+    url(r'^add_teacher/', views.add_teacher),
+    url(r'^edit_teacher/', views.edit_teacher),
+
+    url(r'^test/', views.test),
+    url(r'^layout/', views.layout),
+
 
 ]

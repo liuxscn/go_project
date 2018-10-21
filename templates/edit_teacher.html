@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit_class</title>
+</head>
+<body>
+    <h1>info</h1>
+    <h2>编辑老师信息</h2>
+    <form method="post" action="/edit_teacher/?nid={{ t_id }}">
+    <p><input type="text" name="teacher_name" value="{{ t_name }}"/></p>
+    <p>
+        <select name="class_ids" size="10" multiple>
+            {% for class in class_list %}
+                {% if class.id in class_ids %}
+                    <option value="{{ class.id }}" selected>{{ class.name }}</option>
+                {% else %}
+                    <option value="{{ class.id }}">{{ class.name }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </p>
+    <input type="submit" value="编辑">
+        {{ edit_error_msg }}
+    </form>
+</body>
+</html>
